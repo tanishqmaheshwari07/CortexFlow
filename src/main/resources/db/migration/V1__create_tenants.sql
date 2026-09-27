@@ -1,0 +1,12 @@
+CREATE TABLE tenants
+(
+    id UUID PRIMARY KEY,
+
+    name VARCHAR(255) NOT NULL UNIQUE,
+
+    code VARCHAR(50) NOT NULL UNIQUE,
+
+    active BOOLEAN NOT NULL,
+
+    created_at TIMESTAMP
+);
