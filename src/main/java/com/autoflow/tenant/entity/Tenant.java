@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import com.autoflow.workflow.entity.Workflow;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.Column;
@@ -28,7 +29,7 @@ import lombok.Setter;
 @Builder 
 public class Tenant {
 
-    @JsonManagedReference
+    @JsonIgnore 
     @OneToMany(mappedBy = "tenant")
     private List<Workflow> workflows;
     
