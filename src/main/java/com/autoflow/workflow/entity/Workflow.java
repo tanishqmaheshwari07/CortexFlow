@@ -5,6 +5,7 @@ import java.util.UUID;
 import com.autoflow.tenant.entity.Tenant;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -40,7 +41,9 @@ public class Workflow {
 
     private String description;
 
-    private Boolean active;
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean active = true;
 
     private LocalDateTime createdAt;
 

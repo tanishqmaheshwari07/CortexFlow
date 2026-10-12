@@ -30,7 +30,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .tenant(tenant)
                 .name(request.getName())
                 .description(request.getDescription())
-                .active(request.getActive())
+                .active(true)
                 .createdAt(LocalDateTime.now())
                 .build();
 

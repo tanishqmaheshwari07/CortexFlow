@@ -43,8 +43,9 @@ public class Tenant {
     @Column(nullable = false, unique = true)
     private String code;
 
+    @Builder.Default
     @Column(nullable = false)
-    private Boolean active;
+    private Boolean active = true;
 
     private LocalDateTime createdAt;
 

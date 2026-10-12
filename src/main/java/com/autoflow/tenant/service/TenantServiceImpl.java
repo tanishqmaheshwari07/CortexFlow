@@ -17,17 +17,21 @@ public class TenantServiceImpl implements TenantService {
 
     private final TenantRepository tenantRepository;
 
+    
     @Override
-    public Tenant create(TenantRequest request){
+    public Tenant create(TenantRequest request) {
 
         Tenant tenant = Tenant.builder()
                 .name(request.getName())
                 .code(request.getCode())
-                .active(request.getActive())
+                .active(request.getActive() != null
+                        ? request.getActive()
+                        : true)
                 .build();
 
         return tenantRepository.save(tenant);
     }
+
     @Override 
     public List<Tenant> getAll(){
         return tenantRepository.findAll();
