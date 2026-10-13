@@ -1,10 +1,12 @@
 package com.autoflow.workflow.controller;
 
 import com.autoflow.workflow.dto.ApprovalActionRequest;
+import com.autoflow.workflow.dto.ApprovalActionResponse;
 import com.autoflow.workflow.dto.ApprovalRequestDto;
 import com.autoflow.workflow.dto.ApprovalRequestResponse;
 import com.autoflow.workflow.service.ApprovalRequestService;
-
+import java.util.List;
+import com.autoflow.workflow.dto.ApprovalActionResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -44,5 +46,14 @@ public class ApprovalRequestController {
 
         return ResponseEntity.ok(
                 approvalRequestService.reject(id, actionRequest));
+    }
+
+    
+    @GetMapping("/{id}/history")
+    public ResponseEntity<List<ApprovalActionResponse>> getHistory(
+            @PathVariable UUID id) {
+
+        return ResponseEntity.ok(
+                approvalRequestService.getHistory(id));
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.autoflow.workflow.dto.ApprovalActionRequest;
+import com.autoflow.workflow.dto.ApprovalActionResponse;
 import com.autoflow.workflow.dto.ApprovalRequestDto;
 import com.autoflow.workflow.dto.ApprovalRequestResponse;
 import com.autoflow.workflow.entity.ApprovalAction;
@@ -23,8 +24,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class ApprovalRequestServiceImpl
-        implements ApprovalRequestService {
+public class ApprovalRequestServiceImpl implements ApprovalRequestService {
 
     private final ApprovalRequestRepository approvalRequestRepository;
     private final WorkflowRepository workflowRepository;
@@ -33,19 +33,14 @@ public class ApprovalRequestServiceImpl
 
     @Override
     public ApprovalRequestResponse create(ApprovalRequestDto requestDto) {
+        Workflow workflow = workflowRepository.findById(requestDto.getWorkflowId())
+                .orElseThrow(() -> new RuntimeException("Workflow not found"));
 
-        Workflow workflow = workflowRepository.findById(
-                requestDto.getWorkflowId())
-                .orElseThrow(() ->
-                        new RuntimeException("Workflow not found"));
-
-        List<WorkflowStep> steps =
-                workflowStepRepository.findByWorkflowIdOrderByStepOrderAsc(
-                        workflow.getId());
+        List<WorkflowStep> steps = workflowStepRepository
+                .findByWorkflowIdOrderByStepOrderAsc(workflow.getId());
 
         if (steps.isEmpty()) {
-            throw new RuntimeException(
-                    "Cannot create request: workflow has no steps");
+            throw new RuntimeException("Cannot create request: workflow has no steps");
         }
 
         ApprovalRequest request = new ApprovalRequest();
@@ -57,95 +52,71 @@ public class ApprovalRequestServiceImpl
         request.setCreatedAt(LocalDateTime.now());
 
         ApprovalRequest saved = approvalRequestRepository.save(request);
-
         return toResponse(saved);
     }
 
     @Override
     @Transactional
-    public ApprovalRequestResponse approve(
-            UUID requestId,
-            ApprovalActionRequest actionRequest) {
-
+    public ApprovalRequestResponse approve(UUID requestId, ApprovalActionRequest actionRequest) {
         ApprovalRequest request = getPendingRequest(requestId);
 
-        List<WorkflowStep> steps =
-                workflowStepRepository.findByWorkflowIdOrderByStepOrderAsc(
-                        request.getWorkflow().getId());
+        List<WorkflowStep> steps = workflowStepRepository
+                .findByWorkflowIdOrderByStepOrderAsc(request.getWorkflow().getId());
 
-        int currentIndex = findCurrentStepIndex(
-                steps, request.getCurrentStep());
-
+        int currentIndex = findCurrentStepIndex(steps, request.getCurrentStep());
         WorkflowStep currentStep = steps.get(currentIndex);
 
         saveAction(request, currentStep, actionRequest, "APPROVED");
 
         if (currentIndex + 1 < steps.size()) {
             // More approval steps remain.
-            request.setCurrentStep(
-                    steps.get(currentIndex + 1).getStepOrder());
+            request.setCurrentStep(steps.get(currentIndex + 1).getStepOrder());
         } else {
             // The final step has been approved.
             request.setStatus("APPROVED");
         }
 
         ApprovalRequest saved = approvalRequestRepository.save(request);
-
         return toResponse(saved);
     }
 
     @Override
     @Transactional
-    public ApprovalRequestResponse reject(
-            UUID requestId,
-            ApprovalActionRequest actionRequest) {
-
+    public ApprovalRequestResponse reject(UUID requestId, ApprovalActionRequest actionRequest) {
         ApprovalRequest request = getPendingRequest(requestId);
 
-        List<WorkflowStep> steps =
-                workflowStepRepository.findByWorkflowIdOrderByStepOrderAsc(
-                        request.getWorkflow().getId());
+        List<WorkflowStep> steps = workflowStepRepository
+                .findByWorkflowIdOrderByStepOrderAsc(request.getWorkflow().getId());
 
-        int currentIndex = findCurrentStepIndex(
-                steps, request.getCurrentStep());
-
+        int currentIndex = findCurrentStepIndex(steps, request.getCurrentStep());
         WorkflowStep currentStep = steps.get(currentIndex);
 
         saveAction(request, currentStep, actionRequest, "REJECTED");
-
         request.setStatus("REJECTED");
 
         ApprovalRequest saved = approvalRequestRepository.save(request);
-
         return toResponse(saved);
     }
 
     private ApprovalRequest getPendingRequest(UUID requestId) {
-
-        ApprovalRequest request = approvalRequestRepository
-                .findById(requestId)
-                .orElseThrow(() ->
-                        new RuntimeException("Approval request not found"));
+        ApprovalRequest request = approvalRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Approval request not found"));
 
         if (!"PENDING".equals(request.getStatus())) {
-            throw new RuntimeException(
-                    "Only PENDING requests can be approved or rejected");
+            throw new RuntimeException("Only PENDING requests can be approved or rejected");
         }
 
         return request;
     }
 
-    private int findCurrentStepIndex(
-            List<WorkflowStep> steps, Integer currentStep) {
-
+    private int findCurrentStepIndex(List<WorkflowStep> steps, Integer currentStep) {
         for (int i = 0; i < steps.size(); i++) {
             if (steps.get(i).getStepOrder().equals(currentStep)) {
                 return i;
             }
         }
 
-        throw new RuntimeException(
-                "Current workflow step was not found");
+        throw new RuntimeException("Current workflow step was not found");
     }
 
     private void saveAction(
@@ -153,9 +124,7 @@ public class ApprovalRequestServiceImpl
             WorkflowStep step,
             ApprovalActionRequest actionRequest,
             String actionType) {
-
         ApprovalAction action = new ApprovalAction();
-
         action.setApprovalRequest(request);
         action.setWorkflowStep(step);
         action.setApprover(actionRequest.getApprover());
@@ -165,12 +134,8 @@ public class ApprovalRequestServiceImpl
         approvalActionRepository.save(action);
     }
 
-    private ApprovalRequestResponse toResponse(
-            ApprovalRequest request) {
-
-        ApprovalRequestResponse response =
-                new ApprovalRequestResponse();
-
+    private ApprovalRequestResponse toResponse(ApprovalRequest request) {
+        ApprovalRequestResponse response = new ApprovalRequestResponse();
         response.setId(request.getId());
         response.setWorkflowId(request.getWorkflow().getId());
         response.setWorkflowName(request.getWorkflow().getName());
@@ -180,5 +145,28 @@ public class ApprovalRequestServiceImpl
         response.setCreatedAt(request.getCreatedAt());
 
         return response;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ApprovalActionResponse> getHistory(UUID requestId) {
+        // First verify that the request exists.
+        approvalRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Approval request not found"));
+
+        List<ApprovalAction> actions = approvalActionRepository
+                .findByApprovalRequest_IdOrderByActionTimeAsc(requestId);
+
+        return actions.stream().map(action -> {
+            ApprovalActionResponse response = new ApprovalActionResponse();
+            response.setId(action.getId());
+            response.setApprover(action.getApprover());
+            response.setAction(action.getAction());
+            response.setComments(action.getComments());
+            response.setActionTime(action.getActionTime());
+            response.setStepOrder(action.getWorkflowStep().getStepOrder());
+            response.setStepName(action.getWorkflowStep().getName());
+            return response;
+        }).toList();
     }
 }

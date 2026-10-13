@@ -1,5 +1,7 @@
 
 package com.autoflow.workflow.service;
+import java.util.List;
+import com.autoflow.workflow.dto.ApprovalActionResponse;
 
 import java.util.UUID;
 
@@ -18,4 +20,7 @@ public interface ApprovalRequestService {
     ApprovalRequestResponse reject(
             UUID requestId,
             ApprovalActionRequest actionRequest);
+
+    List<ApprovalActionResponse> getHistory(UUID requestId);
+    
 }
