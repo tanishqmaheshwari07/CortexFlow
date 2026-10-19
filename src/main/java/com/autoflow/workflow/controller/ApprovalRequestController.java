@@ -6,7 +6,6 @@ import com.autoflow.workflow.dto.ApprovalRequestDto;
 import com.autoflow.workflow.dto.ApprovalRequestResponse;
 import com.autoflow.workflow.service.ApprovalRequestService;
 import java.util.List;
-import com.autoflow.workflow.dto.ApprovalActionResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
