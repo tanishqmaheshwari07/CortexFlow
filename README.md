@@ -1,4 +1,4 @@
-# AutoFlow — Distributed Workflow Automation Platform
+# CortexFlow — Distributed Workflow Automation Platform
 
 AutoFlow is a multi-tenant workflow automation platform designed to manage workflows, approval processes, and background jobs. It uses Java and Spring Boot for backend development, PostgreSQL for persistent storage, and RabbitMQ for job-queue infrastructure.
 
